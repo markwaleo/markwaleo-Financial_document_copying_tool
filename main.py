@@ -102,26 +102,36 @@ def copy_project(project_dir, source_dirs, single_bar):
     root.update_idletasks()
 
     for idx, identifier in enumerate(identifiers, 1):
+        normalized_identifier = identifier.replace(" ", "").strip()
         found = False
+
         for src_base in source_dirs:
-            src_path = os.path.join(src_base, identifier)
-            if os.path.isdir(src_path):
-                dst_path = os.path.join(dest_folder, identifier)
-                if os.path.exists(dst_path):
-                    log_and_display(f"[跳过] {project_name} - {identifier} 已存在，跳过复制")
-                else:
-                    try:
-                        shutil.copytree(src_path, dst_path)
-                        log_and_display(f"[成功] {project_name} - {identifier} ← {src_path}")
-                    except Exception as e:
-                        log_and_display(f"[错误] {project_name} - 复制失败：{e}")
-                found = True
+            for folder_name in os.listdir(src_base):
+                folder_path = os.path.join(src_base, folder_name)
+                if os.path.isdir(folder_path):
+                    normalized_folder = folder_name.replace(" ", "").strip()
+                    if normalized_folder == normalized_identifier:
+                        dst_path = os.path.join(dest_folder, folder_name)  # 保留原始文件夹名
+                        if os.path.exists(dst_path):
+                            log_and_display(f"[跳过] {project_name} - {identifier} 已存在，跳过复制")
+                        else:
+                            try:
+                                shutil.copytree(folder_path, dst_path)
+                                log_and_display(f"[成功] {project_name} - {identifier} ← {folder_path}")
+                            except Exception as e:
+                                log_and_display(f"[错误] {project_name} - 复制失败：{e}")
+                        found = True
+                        break
+            if found:
                 break
+
         if not found:
             log_and_display(f"[失败] {project_name} - {identifier} 未在任一源目录中找到")
+
         single_bar["value"] = idx
         single_bar_label["text"] = f"{int((idx / len(identifiers)) * 100)}%"
         root.update_idletasks()
+
 
 def log_and_display(message):
     log_entries.append(message)
